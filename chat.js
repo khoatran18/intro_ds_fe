@@ -23,15 +23,10 @@ const appendMessage = (role, content) => {
   const wrapper = document.createElement('div');
   wrapper.className = `chat-message ${role}`;
 
-  const avatar = document.createElement('div');
-  avatar.className = 'avatar';
-  avatar.textContent = role === 'assistant' ? 'AI' : 'You';
-
   const body = document.createElement('div');
   body.className = 'content';
   body.textContent = content;
 
-  wrapper.appendChild(avatar);
   wrapper.appendChild(body);
   chatBody.appendChild(wrapper);
   chatBody.scrollTop = chatBody.scrollHeight;
@@ -149,6 +144,8 @@ const sendMessage = async (content) => {
       chatId = payload?.chat_id || chatId;
       if (chatId) {
         localStorage.setItem('chat_id', chatId);
+        chatHistoryOffset = null;
+        loadChatHistoryBase();
       }
     }
     const reply = payload?.content || 'Mình đã nhận được tin nhắn!';
