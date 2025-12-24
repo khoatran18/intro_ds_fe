@@ -12,6 +12,9 @@ let chatId = localStorage.getItem('chat_id');
 const DEFAULT_LIMIT = 10;
 const chatOffsets = {};
 let chatHistoryOffset = null;
+let chatHistoryLoading = false;
+let chatHistoryDone = false;
+let chatHistoryItems = [];
 
 if (!user) {
   window.location.href = 'index.html';
@@ -45,16 +48,28 @@ const setActiveChat = (nextChatId) => {
   });
 };
 
-const renderChatList = (items) => {
+const renderChatList = (items, append = false) => {
+  if (append) {
+    const existing = new Map(
+      chatHistoryItems.map((item) => [item.chat_id, item])
+    );
+    items.forEach((item) => {
+      if (item?.chat_id && !existing.has(item.chat_id)) {
+        chatHistoryItems.push(item);
+      }
+    });
+  } else {
+    chatHistoryItems = items;
+  }
   chatListEl.innerHTML = '';
-  if (!items || items.length === 0) {
+  if (!chatHistoryItems || chatHistoryItems.length === 0) {
     const empty = document.createElement('span');
     empty.textContent = 'Chưa có lịch sử khác.';
     chatListEl.appendChild(empty);
     return;
   }
 
-  items.forEach((item) => {
+  chatHistoryItems.forEach((item) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.chatId = item?.chat_id || '';
@@ -82,6 +97,8 @@ const extractOldestCreatedAt = (items) => {
 
 const loadChatHistoryBase = async () => {
   if (!user?.id) return;
+  if (chatHistoryLoading || chatHistoryDone) return;
+  chatHistoryLoading = true;
   try {
     const url = new URL(`${apiBaseUrl}/chat/chat_history_base`);
     url.searchParams.set('user_id', user.id);
@@ -93,10 +110,16 @@ const loadChatHistoryBase = async () => {
     if (!response.ok) return;
     const payload = await response.json();
     const chats = payload?.chat_history || [];
-    renderChatList(chats);
-    chatHistoryOffset = extractOldestCreatedAt(chats);
+    if (chats.length === 0 && chatHistoryOffset) {
+      chatHistoryDone = true;
+      return;
+    }
+    renderChatList(chats, Boolean(chatHistoryOffset));
+    chatHistoryOffset = extractOldestCreatedAt(chats) || chatHistoryOffset;
   } catch (error) {
     renderChatList([]);
+  } finally {
+    chatHistoryLoading = false;
   }
 };
 
@@ -158,6 +181,7 @@ const sendMessage = async (content) => {
       const newChatId = payload?.chat_id || chatId;
       if (newChatId) {
         setActiveChat(newChatId);
+        chatHistoryDone = false;
         chatHistoryOffset = null;
         loadChatHistoryBase();
       }
@@ -174,6 +198,7 @@ chatForm.addEventListener('submit', (event) => {
   const content = messageInput.value.trim();
   if (!content) return;
   messageInput.value = '';
+  messageInput.style.height = '48px';
   sendMessage(content);
 });
 
@@ -182,10 +207,16 @@ messageInput.addEventListener('input', () => {
   messageInput.style.height = `${messageInput.scrollHeight}px`;
 });
 
+messageInput.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    chatForm.requestSubmit();
+  }
+});
+
 newChatBtn.addEventListener('click', () => {
   chatBody.innerHTML = '';
-  chatId = '';
-  localStorage.removeItem('chat_id');
+  setActiveChat('');
   appendMessage('assistant', 'Cuộc hội thoại mới đã sẵn sàng.');
 });
 
@@ -199,3 +230,13 @@ if (chatId) {
   loadChat(chatId);
 }
 loadChatHistoryBase();
+
+chatListEl.addEventListener('scroll', () => {
+  if (chatHistoryDone || chatHistoryLoading) return;
+  const nearBottom =
+    chatListEl.scrollTop + chatListEl.clientHeight >=
+    chatListEl.scrollHeight - 12;
+  if (nearBottom) {
+    loadChatHistoryBase();
+  }
+});
