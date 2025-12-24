@@ -32,6 +32,19 @@ const appendMessage = (role, content) => {
   chatBody.scrollTop = chatBody.scrollHeight;
 };
 
+const setActiveChat = (nextChatId) => {
+  chatId = nextChatId || '';
+  if (chatId) {
+    localStorage.setItem('chat_id', chatId);
+  } else {
+    localStorage.removeItem('chat_id');
+  }
+  const buttons = chatListEl.querySelectorAll('button[data-chat-id]');
+  buttons.forEach((button) => {
+    button.classList.toggle('active', button.dataset.chatId === chatId);
+  });
+};
+
 const renderChatList = (items) => {
   chatListEl.innerHTML = '';
   if (!items || items.length === 0) {
@@ -44,17 +57,18 @@ const renderChatList = (items) => {
   items.forEach((item) => {
     const button = document.createElement('button');
     button.type = 'button';
+    button.dataset.chatId = item?.chat_id || '';
     button.textContent =
       item?.title || item?.summary || `Chat ${item?.chat_id || ''}`.trim();
     button.addEventListener('click', () => {
       if (!item?.chat_id) return;
-      chatId = item.chat_id;
-      localStorage.setItem('chat_id', chatId);
+      setActiveChat(item.chat_id);
       chatBody.innerHTML = '';
       loadChat(chatId);
     });
     chatListEl.appendChild(button);
   });
+  setActiveChat(chatId);
 };
 
 const extractOldestCreatedAt = (items) => {
@@ -141,9 +155,9 @@ const sendMessage = async (content) => {
 
     const payload = await response.json().catch(() => ({}));
     if (!chatId) {
-      chatId = payload?.chat_id || chatId;
-      if (chatId) {
-        localStorage.setItem('chat_id', chatId);
+      const newChatId = payload?.chat_id || chatId;
+      if (newChatId) {
+        setActiveChat(newChatId);
         chatHistoryOffset = null;
         loadChatHistoryBase();
       }

@@ -61,9 +61,7 @@ form.addEventListener('submit', async (event) => {
 
     const user = await response.json();
     localStorage.setItem('chat_user', JSON.stringify(user));
-    if (!localStorage.getItem('chat_id')) {
-      localStorage.setItem('chat_id', crypto.randomUUID());
-    }
+    localStorage.removeItem('chat_id');
     window.location.href = 'chat.html';
   } catch (error) {
     setAlert(error.message || 'Đã có lỗi xảy ra.');
