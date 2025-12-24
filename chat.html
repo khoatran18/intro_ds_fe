@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatGPT Style - Chat</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="chat-shell">
+      <aside class="sidebar">
+        <h2>ChatGPT Clone</h2>
+        <button id="new-chat">+ Tạo đoạn chat mới</button>
+        <div class="chat-list" id="chat-list">
+          <span>Chưa có lịch sử khác.</span>
+        </div>
+        <div class="helper-text">
+          <span id="user-name"></span>
+          <br />
+          <a href="index.html" id="logout-link">Đăng xuất</a>
+        </div>
+      </aside>
+      <main class="chat-main">
+        <header class="chat-header">
+          <h1>Chat với AI</h1>
+          <p class="helper-text">Bắt đầu cuộc hội thoại giống ChatGPT.</p>
+        </header>
+        <section class="chat-body" id="chat-body"></section>
+        <section class="chat-input">
+          <form id="chat-form">
+            <textarea
+              id="message"
+              placeholder="Nhập tin nhắn của bạn..."
+              rows="1"
+            ></textarea>
+            <button class="send-btn" type="submit">Gửi</button>
+          </form>
+          <div class="chat-footer">API powered chat · /chat/message</div>
+        </section>
+      </main>
+    </div>
+    <script src="chat.js"></script>
+  </body>
+</html>

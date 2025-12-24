@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatGPT Style - Đăng nhập & Đăng ký</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container auth-shell">
+      <div>
+        <div class="brand">ChatGPT Clone</div>
+        <h1>Đăng nhập hoặc tạo tài khoản</h1>
+        <p class="helper-text">
+          Kết nối nhanh với API và bắt đầu trò chuyện ngay.
+        </p>
+      </div>
+      <div class="auth-panel">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Đăng nhập</button>
+          <button class="auth-tab" data-tab="register">Đăng ký</button>
+        </div>
+        <div id="alert" class="alert" hidden></div>
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="username">Tên đăng nhập</label>
+            <input id="username" name="username" type="text" placeholder="username" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <input id="password" name="password" type="password" placeholder="••••••" required />
+          </div>
+          <button type="submit" id="submit-btn">Đăng nhập</button>
+        </form>
+        <p class="helper-text">
+          Bạn sẽ được chuyển đến trang chat ngay sau khi thành công.
+        </p>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
