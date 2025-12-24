@@ -10,6 +10,8 @@ const chatListEl = document.getElementById('chat-list');
 const user = JSON.parse(localStorage.getItem('chat_user') || 'null');
 let chatId = localStorage.getItem('chat_id');
 const DEFAULT_LIMIT = 10;
+const chatOffsets = {};
+let chatHistoryOffset = null;
 
 if (!user) {
   window.location.href = 'index.html';
@@ -60,13 +62,25 @@ const renderChatList = (items) => {
   });
 };
 
+const extractOldestCreatedAt = (items) => {
+  if (!Array.isArray(items) || items.length === 0) return null;
+  const sorted = [...items].sort((a, b) => {
+    if (!a?.created_at || !b?.created_at) return 0;
+    return new Date(a.created_at) - new Date(b.created_at);
+  });
+  return sorted[0]?.created_at || null;
+};
+
 const loadChatHistoryBase = async () => {
   if (!user?.id) return;
   try {
     const url = new URL(`${apiBaseUrl}/chat/chat_history_base`);
     url.searchParams.set('user_id', user.id);
     url.searchParams.set('limit', DEFAULT_LIMIT);
-    const response = await fetch(url.toString(), { method: 'POST' });
+    if (chatHistoryOffset) {
+      url.searchParams.set('offset', chatHistoryOffset);
+    }
+    const response = await fetch(url.toString());
     if (!response.ok) return;
     const payload = await response.json();
     const chats =
@@ -75,6 +89,7 @@ const loadChatHistoryBase = async () => {
       payload?.data ||
       (Array.isArray(payload) ? payload : []);
     renderChatList(chats);
+    chatHistoryOffset = extractOldestCreatedAt(chats);
   } catch (error) {
     renderChatList([]);
   }
@@ -84,6 +99,9 @@ const loadChat = async (chatIdToLoad) => {
   try {
     const url = new URL(`${apiBaseUrl}/chat/${chatIdToLoad}`);
     url.searchParams.set('limit', DEFAULT_LIMIT);
+    if (chatOffsets[chatIdToLoad]) {
+      url.searchParams.set('offset', chatOffsets[chatIdToLoad]);
+    }
     const response = await fetch(url.toString());
     if (!response.ok) {
       return;
@@ -100,6 +118,10 @@ const loadChat = async (chatIdToLoad) => {
         appendMessage(msg.role || 'assistant', msg.content || '');
       });
     }
+    const oldest = extractOldestCreatedAt(messages);
+    if (oldest) {
+      chatOffsets[chatIdToLoad] = oldest;
+    }
   } catch (error) {
     appendMessage(
       'assistant',
@@ -115,7 +137,9 @@ const sendMessage = async (content) => {
     const endpoint = chatId
       ? `${apiBaseUrl}/message/`
       : `${apiBaseUrl}/message/new_chat_message`;
-    const body = chatId ? { content } : { content, user_id: user?.id };
+    const body = chatId
+      ? { chat_id: chatId, content }
+      : { content, user_id: user?.id };
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
