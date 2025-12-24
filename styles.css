@@ -228,7 +228,6 @@ button:hover {
 .chat-message {
   display: flex;
   padding: 18px 32px;
-  border-bottom: 1px solid rgba(31, 41, 55, 0.6);
 }
 
 .chat-message .content {
@@ -274,7 +273,6 @@ button:hover {
 
 .chat-input {
   padding: 20px 32px 32px;
-  border-top: 1px solid var(--border);
   background: #0b1220;
 }
 
@@ -289,10 +287,14 @@ button:hover {
   min-height: 48px;
   max-height: 160px;
   background: #0f172a;
+  border-radius: 18px;
+  font-size: 15px;
 }
 
 .chat-input .send-btn {
   min-width: 120px;
+  border-radius: 18px;
+  font-size: 16px;
 }
 
 .chat-footer {

@@ -10,7 +10,7 @@ const chatListEl = document.getElementById('chat-list');
 const user = JSON.parse(localStorage.getItem('chat_user') || 'null');
 let chatId = localStorage.getItem('chat_id');
 const DEFAULT_LIMIT = 10;
-const chatOffsets = {};
+const chatStates = {};
 let chatHistoryOffset = null;
 let chatHistoryLoading = false;
 let chatHistoryDone = false;
@@ -33,6 +33,19 @@ const appendMessage = (role, content) => {
   wrapper.appendChild(body);
   chatBody.appendChild(wrapper);
   chatBody.scrollTop = chatBody.scrollHeight;
+};
+
+const sortByCreatedAtAsc = (items) =>
+  [...items].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+const sortByCreatedAtDesc = (items) =>
+  [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+const getChatState = (id) => {
+  if (!chatStates[id]) {
+    chatStates[id] = { offset: null, loading: false, done: false };
+  }
+  return chatStates[id];
 };
 
 const setActiveChat = (nextChatId) => {
@@ -69,7 +82,7 @@ const renderChatList = (items, append = false) => {
     return;
   }
 
-  chatHistoryItems.forEach((item) => {
+  sortByCreatedAtDesc(chatHistoryItems).forEach((item) => {
     const button = document.createElement('button');
     button.type = 'button';
     button.dataset.chatId = item?.chat_id || '';
@@ -79,7 +92,7 @@ const renderChatList = (items, append = false) => {
       if (!item?.chat_id) return;
       setActiveChat(item.chat_id);
       chatBody.innerHTML = '';
-      loadChat(chatId);
+      loadChat(chatId, { reset: true });
     });
     chatListEl.appendChild(button);
   });
@@ -115,7 +128,8 @@ const loadChatHistoryBase = async () => {
       return;
     }
     renderChatList(chats, Boolean(chatHistoryOffset));
-    chatHistoryOffset = extractOldestCreatedAt(chats) || chatHistoryOffset;
+    chatHistoryOffset =
+      extractOldestCreatedAt(chatHistoryItems) || chatHistoryOffset;
   } catch (error) {
     renderChatList([]);
   } finally {
@@ -123,12 +137,44 @@ const loadChatHistoryBase = async () => {
   }
 };
 
-const loadChat = async (chatIdToLoad) => {
+const renderMessages = (messages, prepend = false) => {
+  if (!Array.isArray(messages) || messages.length === 0) return;
+  const ordered = sortByCreatedAtAsc(messages);
+  const previousHeight = chatBody.scrollHeight;
+  ordered.forEach((msg) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = `chat-message ${msg.role || 'assistant'}`;
+    const body = document.createElement('div');
+    body.className = 'content';
+    body.textContent = msg.content || '';
+    wrapper.appendChild(body);
+    if (prepend && chatBody.firstChild) {
+      chatBody.insertBefore(wrapper, chatBody.firstChild);
+    } else {
+      chatBody.appendChild(wrapper);
+    }
+  });
+  if (prepend) {
+    chatBody.scrollTop += chatBody.scrollHeight - previousHeight;
+  } else {
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+};
+
+const loadChat = async (chatIdToLoad, { prepend = false, reset = false } = {}) => {
+  if (!chatIdToLoad) return;
+  const state = getChatState(chatIdToLoad);
+  if (state.loading || state.done) return;
+  if (reset) {
+    state.offset = null;
+    state.done = false;
+  }
+  state.loading = true;
   try {
     const url = new URL(`${apiBaseUrl}/chat/${chatIdToLoad}`);
     url.searchParams.set('limit', DEFAULT_LIMIT);
-    if (chatOffsets[chatIdToLoad]) {
-      url.searchParams.set('offset', chatOffsets[chatIdToLoad]);
+    if (state.offset) {
+      url.searchParams.set('offset', state.offset);
     }
     const response = await fetch(url.toString());
     if (!response.ok) {
@@ -137,20 +183,22 @@ const loadChat = async (chatIdToLoad) => {
 
     const payload = await response.json();
     const messages = payload?.messages || [];
-    if (Array.isArray(messages)) {
-      messages.forEach((msg) => {
-        appendMessage(msg.role || 'assistant', msg.content || '');
-      });
+    if (messages.length === 0 && state.offset) {
+      state.done = true;
+      return;
     }
+    renderMessages(messages, prepend);
     const oldest = extractOldestCreatedAt(messages);
     if (oldest) {
-      chatOffsets[chatIdToLoad] = oldest;
+      state.offset = oldest;
     }
   } catch (error) {
     appendMessage(
       'assistant',
       'Không thể tải lịch sử chat. Bạn vẫn có thể gửi tin nhắn mới.'
     );
+  } finally {
+    state.loading = false;
   }
 };
 
@@ -181,6 +229,7 @@ const sendMessage = async (content) => {
       const newChatId = payload?.chat_id || chatId;
       if (newChatId) {
         setActiveChat(newChatId);
+        getChatState(newChatId);
         chatHistoryDone = false;
         chatHistoryOffset = null;
         loadChatHistoryBase();
@@ -227,7 +276,7 @@ logoutLink.addEventListener('click', () => {
 
 appendMessage('assistant', 'Xin chào! Hãy bắt đầu nhập câu hỏi của bạn.');
 if (chatId) {
-  loadChat(chatId);
+  loadChat(chatId, { reset: true });
 }
 loadChatHistoryBase();
 
@@ -238,5 +287,12 @@ chatListEl.addEventListener('scroll', () => {
     chatListEl.scrollHeight - 12;
   if (nearBottom) {
     loadChatHistoryBase();
+  }
+});
+
+chatBody.addEventListener('scroll', () => {
+  if (!chatId) return;
+  if (chatBody.scrollTop <= 12) {
+    loadChat(chatId, { prepend: true });
   }
 });
