@@ -4,6 +4,9 @@ const submitBtn = document.getElementById('submit-btn');
 const alertBox = document.getElementById('alert');
 let activeTab = 'login';
 
+const apiBaseUrl = window.API_BASE_URL || '';
+
+
 const setAlert = (message) => {
   if (!message) {
     alertBox.hidden = true;
@@ -42,7 +45,8 @@ form.addEventListener('submit', async (event) => {
   submitBtn.textContent = 'Đang xử lý...';
 
   try {
-    const response = await fetch(`/auth/${activeTab}`, {
+    const response = await fetch(`${apiBaseUrl}/auth/${activeTab}`, {
+
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

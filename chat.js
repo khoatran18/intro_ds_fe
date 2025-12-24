@@ -4,6 +4,8 @@ const messageInput = document.getElementById('message');
 const userNameEl = document.getElementById('user-name');
 const newChatBtn = document.getElementById('new-chat');
 const logoutLink = document.getElementById('logout-link');
+const apiBaseUrl = window.API_BASE_URL || '';
+
 
 const user = JSON.parse(localStorage.getItem('chat_user') || 'null');
 let chatId = localStorage.getItem('chat_id');
@@ -39,7 +41,8 @@ const loadHistory = async () => {
   }
 
   try {
-    const response = await fetch(`/chat/${chatId}`);
+    const response = await fetch(`${apiBaseUrl}/chat/${chatId}`);
+
     if (!response.ok) {
       return;
     }
@@ -62,7 +65,7 @@ const sendMessage = async (content) => {
   appendMessage('user', content);
 
   try {
-    const response = await fetch('/chat/message', {
+    const response = await fetch(`${apiBaseUrl}/chat/message`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
