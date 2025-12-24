@@ -179,6 +179,16 @@ button:hover {
   font-size: 13px;
 }
 
+.sidebar .chat-list button {
+  text-align: left;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-weight: 500;
+}
+
 .chat-main {
   display: flex;
   flex-direction: column;

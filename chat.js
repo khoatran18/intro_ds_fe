@@ -5,10 +5,11 @@ const userNameEl = document.getElementById('user-name');
 const newChatBtn = document.getElementById('new-chat');
 const logoutLink = document.getElementById('logout-link');
 const apiBaseUrl = window.API_BASE_URL || '';
-
+const chatListEl = document.getElementById('chat-list');
 
 const user = JSON.parse(localStorage.getItem('chat_user') || 'null');
 let chatId = localStorage.getItem('chat_id');
+const DEFAULT_LIMIT = 10;
 
 if (!user) {
   window.location.href = 'index.html';
@@ -34,22 +35,68 @@ const appendMessage = (role, content) => {
   chatBody.scrollTop = chatBody.scrollHeight;
 };
 
-const loadHistory = async () => {
-  if (!chatId) {
-    chatId = crypto.randomUUID();
-    localStorage.setItem('chat_id', chatId);
+const renderChatList = (items) => {
+  chatListEl.innerHTML = '';
+  if (!items || items.length === 0) {
+    const empty = document.createElement('span');
+    empty.textContent = 'Chưa có lịch sử khác.';
+    chatListEl.appendChild(empty);
+    return;
   }
 
-  try {
-    const response = await fetch(`${apiBaseUrl}/chat/${chatId}`);
+  items.forEach((item) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent =
+      item?.title || item?.summary || `Chat ${item?.chat_id || ''}`.trim();
+    button.addEventListener('click', () => {
+      if (!item?.chat_id) return;
+      chatId = item.chat_id;
+      localStorage.setItem('chat_id', chatId);
+      chatBody.innerHTML = '';
+      loadChat(chatId);
+    });
+    chatListEl.appendChild(button);
+  });
+};
 
+const loadChatHistoryBase = async () => {
+  if (!user?.id) return;
+  try {
+    const url = new URL(`${apiBaseUrl}/chat/chat_history_base`);
+    url.searchParams.set('user_id', user.id);
+    url.searchParams.set('limit', DEFAULT_LIMIT);
+    const response = await fetch(url.toString(), { method: 'POST' });
+    if (!response.ok) return;
+    const payload = await response.json();
+    const chats =
+      payload?.chats ||
+      payload?.items ||
+      payload?.data ||
+      (Array.isArray(payload) ? payload : []);
+    renderChatList(chats);
+  } catch (error) {
+    renderChatList([]);
+  }
+};
+
+const loadChat = async (chatIdToLoad) => {
+  try {
+    const url = new URL(`${apiBaseUrl}/chat/${chatIdToLoad}`);
+    url.searchParams.set('limit', DEFAULT_LIMIT);
+    const response = await fetch(url.toString());
     if (!response.ok) {
       return;
     }
 
     const payload = await response.json();
-    if (Array.isArray(payload?.messages)) {
-      payload.messages.forEach((msg) => {
+    const messages =
+      payload?.messages ||
+      payload?.items ||
+      payload?.data ||
+      (Array.isArray(payload) ? payload : []);
+    if (Array.isArray(messages)) {
+      messages.forEach((msg) => {
         appendMessage(msg.role || 'assistant', msg.content || '');
       });
     }
@@ -65,12 +112,16 @@ const sendMessage = async (content) => {
   appendMessage('user', content);
 
   try {
-    const response = await fetch(`${apiBaseUrl}/chat/message`, {
+    const endpoint = chatId
+      ? `${apiBaseUrl}/message/`
+      : `${apiBaseUrl}/message/new_chat_message`;
+    const body = chatId ? { content } : { content, user_id: user?.id };
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ chat_id: chatId, content }),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
@@ -78,7 +129,18 @@ const sendMessage = async (content) => {
     }
 
     const payload = await response.json().catch(() => ({}));
-    const reply = payload?.reply || payload?.message || 'Mình đã nhận được tin nhắn!';
+    if (!chatId) {
+      chatId = payload?.chat_id || payload?.data?.chat_id || chatId;
+      if (chatId) {
+        localStorage.setItem('chat_id', chatId);
+      }
+    }
+    const reply =
+      payload?.reply ||
+      payload?.message ||
+      payload?.content ||
+      payload?.data?.reply ||
+      'Mình đã nhận được tin nhắn!';
     appendMessage('assistant', reply);
   } catch (error) {
     appendMessage('assistant', error.message || 'Có lỗi khi gửi tin nhắn.');
@@ -100,8 +162,8 @@ messageInput.addEventListener('input', () => {
 
 newChatBtn.addEventListener('click', () => {
   chatBody.innerHTML = '';
-  chatId = crypto.randomUUID();
-  localStorage.setItem('chat_id', chatId);
+  chatId = '';
+  localStorage.removeItem('chat_id');
   appendMessage('assistant', 'Cuộc hội thoại mới đã sẵn sàng.');
 });
 
@@ -111,4 +173,7 @@ logoutLink.addEventListener('click', () => {
 });
 
 appendMessage('assistant', 'Xin chào! Hãy bắt đầu nhập câu hỏi của bạn.');
-loadHistory();
+if (chatId) {
+  loadChat(chatId);
+}
+loadChatHistoryBase();

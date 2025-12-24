@@ -3,9 +3,7 @@ const form = document.getElementById('auth-form');
 const submitBtn = document.getElementById('submit-btn');
 const alertBox = document.getElementById('alert');
 let activeTab = 'login';
-
 const apiBaseUrl = window.API_BASE_URL || '';
-
 
 const setAlert = (message) => {
   if (!message) {
@@ -46,7 +44,6 @@ form.addEventListener('submit', async (event) => {
 
   try {
     const response = await fetch(`${apiBaseUrl}/auth/${activeTab}`, {
-
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
