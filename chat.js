@@ -83,11 +83,7 @@ const loadChatHistoryBase = async () => {
     const response = await fetch(url.toString());
     if (!response.ok) return;
     const payload = await response.json();
-    const chats =
-      payload?.chats ||
-      payload?.items ||
-      payload?.data ||
-      (Array.isArray(payload) ? payload : []);
+    const chats = payload?.chat_history || [];
     renderChatList(chats);
     chatHistoryOffset = extractOldestCreatedAt(chats);
   } catch (error) {
@@ -108,11 +104,7 @@ const loadChat = async (chatIdToLoad) => {
     }
 
     const payload = await response.json();
-    const messages =
-      payload?.messages ||
-      payload?.items ||
-      payload?.data ||
-      (Array.isArray(payload) ? payload : []);
+    const messages = payload?.messages || [];
     if (Array.isArray(messages)) {
       messages.forEach((msg) => {
         appendMessage(msg.role || 'assistant', msg.content || '');
@@ -154,17 +146,12 @@ const sendMessage = async (content) => {
 
     const payload = await response.json().catch(() => ({}));
     if (!chatId) {
-      chatId = payload?.chat_id || payload?.data?.chat_id || chatId;
+      chatId = payload?.chat_id || chatId;
       if (chatId) {
         localStorage.setItem('chat_id', chatId);
       }
     }
-    const reply =
-      payload?.reply ||
-      payload?.message ||
-      payload?.content ||
-      payload?.data?.reply ||
-      'Mình đã nhận được tin nhắn!';
+    const reply = payload?.content || 'Mình đã nhận được tin nhắn!';
     appendMessage('assistant', reply);
   } catch (error) {
     appendMessage('assistant', error.message || 'Có lỗi khi gửi tin nhắn.');
