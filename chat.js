@@ -62,6 +62,8 @@ const setActiveChat = (nextChatId) => {
 };
 
 const renderChatList = (items, append = false) => {
+  const previousHeight = chatListEl.scrollHeight;
+  const previousScroll = chatListEl.scrollTop;
   if (append) {
     const existing = new Map(
       chatHistoryItems.map((item) => [item.chat_id, item])
@@ -97,6 +99,10 @@ const renderChatList = (items, append = false) => {
     chatListEl.appendChild(button);
   });
   setActiveChat(chatId);
+  if (append) {
+    chatListEl.scrollTop =
+      previousScroll + (chatListEl.scrollHeight - previousHeight);
+  }
 };
 
 const extractOldestCreatedAt = (items) => {
@@ -141,7 +147,8 @@ const renderMessages = (messages, prepend = false) => {
   if (!Array.isArray(messages) || messages.length === 0) return;
   const ordered = sortByCreatedAtAsc(messages);
   const previousHeight = chatBody.scrollHeight;
-  ordered.forEach((msg) => {
+  const items = prepend ? [...ordered].reverse() : ordered;
+  items.forEach((msg) => {
     const wrapper = document.createElement('div');
     wrapper.className = `chat-message ${msg.role || 'assistant'}`;
     const body = document.createElement('div');
