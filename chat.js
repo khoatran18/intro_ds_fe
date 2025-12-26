@@ -15,6 +15,8 @@ let chatHistoryOffset = null;
 let chatHistoryLoading = false;
 let chatHistoryDone = false;
 let chatHistoryItems = [];
+let chatHistoryRequestCount = 0;
+let chatRequestCount = 0;
 
 if (!user) {
   window.location.href = 'index.html';
@@ -119,16 +121,34 @@ const loadChatHistoryBase = async () => {
   if (chatHistoryLoading || chatHistoryDone) return;
   chatHistoryLoading = true;
   try {
+    chatHistoryRequestCount += 1;
     const url = new URL(`${apiBaseUrl}/chat/chat_history_base`);
     url.searchParams.set('user_id', user.id);
     url.searchParams.set('limit', DEFAULT_LIMIT);
     if (chatHistoryOffset) {
       url.searchParams.set('offset', chatHistoryOffset);
     }
+    console.log('[chat_history_base] request', {
+      id: chatHistoryRequestCount,
+      url: url.toString(),
+      offset: chatHistoryOffset,
+      limit: DEFAULT_LIMIT,
+      user_id: user.id,
+    });
     const response = await fetch(url.toString());
+    console.log('[chat_history_base] response', {
+      id: chatHistoryRequestCount,
+      status: response.status,
+      ok: response.ok,
+    });
     if (!response.ok) return;
     const payload = await response.json();
     const chats = payload?.chat_history || [];
+    console.log('[chat_history_base] payload', {
+      id: chatHistoryRequestCount,
+      count: chats.length,
+      oldest_created_at: extractOldestCreatedAt(chats),
+    });
     if (chats.length === 0 && chatHistoryOffset) {
       chatHistoryDone = true;
       return;
@@ -137,6 +157,7 @@ const loadChatHistoryBase = async () => {
     chatHistoryOffset =
       extractOldestCreatedAt(chatHistoryItems) || chatHistoryOffset;
   } catch (error) {
+    console.error('[chat_history_base] error', error);
     renderChatList([]);
   } finally {
     chatHistoryLoading = false;
@@ -178,18 +199,38 @@ const loadChat = async (chatIdToLoad, { prepend = false, reset = false } = {}) =
   }
   state.loading = true;
   try {
+    chatRequestCount += 1;
     const url = new URL(`${apiBaseUrl}/chat/${chatIdToLoad}`);
     url.searchParams.set('limit', DEFAULT_LIMIT);
     if (state.offset) {
       url.searchParams.set('offset', state.offset);
     }
+    console.log('[chat_history] request', {
+      id: chatRequestCount,
+      url: url.toString(),
+      chat_id: chatIdToLoad,
+      offset: state.offset,
+      limit: DEFAULT_LIMIT,
+      prepend,
+      reset,
+    });
     const response = await fetch(url.toString());
+    console.log('[chat_history] response', {
+      id: chatRequestCount,
+      status: response.status,
+      ok: response.ok,
+    });
     if (!response.ok) {
       return;
     }
 
     const payload = await response.json();
     const messages = payload?.messages || [];
+    console.log('[chat_history] payload', {
+      id: chatRequestCount,
+      count: messages.length,
+      oldest_created_at: extractOldestCreatedAt(messages),
+    });
     if (messages.length === 0 && state.offset) {
       state.done = true;
       return;
@@ -200,6 +241,7 @@ const loadChat = async (chatIdToLoad, { prepend = false, reset = false } = {}) =
       state.offset = oldest;
     }
   } catch (error) {
+    console.error('[chat_history] error', error);
     appendMessage(
       'assistant',
       'Không thể tải lịch sử chat. Bạn vẫn có thể gửi tin nhắn mới.'
@@ -219,6 +261,7 @@ const sendMessage = async (content) => {
     const body = chatId
       ? { chat_id: chatId, content }
       : { content, user_id: user?.id };
+    console.log('[send_message] request', { endpoint, body });
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
@@ -232,6 +275,11 @@ const sendMessage = async (content) => {
     }
 
     const payload = await response.json().catch(() => ({}));
+    console.log('[send_message] response', {
+      status: response.status,
+      ok: response.ok,
+      payload,
+    });
     if (!chatId) {
       const newChatId = payload?.chat_id || chatId;
       if (newChatId) {
@@ -245,6 +293,7 @@ const sendMessage = async (content) => {
     const reply = payload?.content || 'Mình đã nhận được tin nhắn!';
     appendMessage('assistant', reply);
   } catch (error) {
+    console.error('[send_message] error', error);
     appendMessage('assistant', error.message || 'Có lỗi khi gửi tin nhắn.');
   }
 };
@@ -288,18 +337,30 @@ if (chatId) {
 loadChatHistoryBase();
 
 chatListEl.addEventListener('scroll', () => {
+  console.log('[chat_history_base] scroll', {
+    scrollTop: chatListEl.scrollTop,
+    scrollHeight: chatListEl.scrollHeight,
+    clientHeight: chatListEl.clientHeight,
+  });
   if (chatHistoryDone || chatHistoryLoading) return;
   const nearBottom =
     chatListEl.scrollTop + chatListEl.clientHeight >=
     chatListEl.scrollHeight - 12;
   if (nearBottom) {
+    console.log('[chat_history_base] reached bottom, fetching next page');
     loadChatHistoryBase();
   }
 });
 
 chatBody.addEventListener('scroll', () => {
+  console.log('[chat_history] scroll', {
+    scrollTop: chatBody.scrollTop,
+    scrollHeight: chatBody.scrollHeight,
+    clientHeight: chatBody.clientHeight,
+  });
   if (!chatId) return;
   if (chatBody.scrollTop <= 12) {
+    console.log('[chat_history] reached top, fetching next page');
     loadChat(chatId, { prepend: true });
   }
 });
