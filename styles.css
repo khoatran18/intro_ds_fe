@@ -58,6 +58,26 @@ a {
   margin-bottom: 16px;
 }
 
+.brand.hero {
+  font-size: 40px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand .logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #22c55e, #0ea5e9);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #041312;
+  font-size: 22px;
+}
+
 .auth-tabs {
   display: flex;
   gap: 12px;
@@ -168,8 +188,14 @@ button:hover {
   background: transparent;
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 10px 12px;
+  font-size: 15px;
+}
+
+.sidebar #new-chat {
+  font-size: 16px;
+  padding: 12px 14px;
 }
 
 .sidebar .chat-list {
