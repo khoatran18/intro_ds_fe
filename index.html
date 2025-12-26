@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Chatbot - Đăng nhập & Đăng ký</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="container auth-shell">
+      <div class="hero-text">
+        <div class="brand hero">
+          <span class="logo">🎬</span>
+          <span>Movie Chatbot</span>
+        </div>
+        <p class="helper-text">
+          Giải đáp thắc mắc về phim, gợi ý phim hay và trò chuyện thân thiện.
+        </p>
+      </div>
+      <div class="auth-panel">
+        <h1>Đăng nhập hoặc tạo tài khoản</h1>
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="login">Đăng nhập</button>
+          <button class="auth-tab" data-tab="register">Đăng ký</button>
+        </div>
+        <div id="alert" class="alert" hidden></div>
+        <form id="auth-form">
+          <div class="form-group">
+            <label for="username">Tên đăng nhập</label>
+            <input id="username" name="username" type="text" placeholder="username" required />
+          </div>
+          <div class="form-group">
+            <label for="password">Mật khẩu</label>
+            <input id="password" name="password" type="password" placeholder="••••••" required />
+          </div>
+          <button type="submit" id="submit-btn">Đăng nhập</button>
+        </form>
+        <p class="helper-text">
+          Bạn sẽ được chuyển đến trang chat ngay sau khi thành công.
+        </p>
+      </div>
+    </div>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
