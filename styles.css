@@ -38,7 +38,7 @@ a {
 
 .auth-shell {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 32px;
   align-items: center;
   min-height: 100vh;
@@ -50,6 +50,8 @@ a {
   border-radius: 24px;
   padding: 32px;
   box-shadow: var(--shadow);
+  max-width: 520px;
+  width: 100%;
 }
 
 .brand {
@@ -59,7 +61,7 @@ a {
 }
 
 .brand.hero {
-  font-size: 40px;
+  font-size: 68px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -67,15 +69,15 @@ a {
 }
 
 .brand .logo {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
   background: linear-gradient(135deg, #22c55e, #0ea5e9);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: #041312;
-  font-size: 22px;
+  font-size: 28px;
 }
 
 .auth-tabs {
@@ -149,6 +151,11 @@ button:hover {
   margin-top: 12px;
 }
 
+.hero-text .helper-text {
+  font-size: 22px;
+  max-width: 480px;
+}
+
 .helper-text a {
   color: var(--accent);
 }
@@ -180,8 +187,10 @@ button:hover {
 }
 
 .sidebar h2 {
-  font-size: 16px;
+  font-size: 24px;
   font-weight: 600;
+  text-align: center;
+  margin-bottom: 6px;
 }
 
 .sidebar button {
@@ -194,7 +203,7 @@ button:hover {
 }
 
 .sidebar #new-chat {
-  font-size: 16px;
+  font-size: 18px;
   padding: 12px 14px;
 }
 
