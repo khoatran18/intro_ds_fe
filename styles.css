@@ -61,7 +61,7 @@ a {
 }
 
 .brand.hero {
-  font-size: 68px;
+  font-size: 60px;
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -172,7 +172,7 @@ button:hover {
 
 .chat-shell {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: 300px 1fr;
   min-height: 100vh;
 }
 
@@ -350,3 +350,10 @@ button:hover {
     display: none;
   }
 }
+
+.auth-panel h1 {
+  font-size: 30px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+
